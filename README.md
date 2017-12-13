@@ -16,7 +16,7 @@ At the end of this tutorial, you have two .NET console apps:
 
 SimulateManagedDevice, which connects to your IoT hub with the device identity created earlier, receives a reboot direct method, simulates a physical reboot, and reports the time for the last reboot.
 TriggerReboot, which calls a direct method in the simulated device app, displays the response, and displays the updated reported properties.
-To complete this tutorial, you need the following:
+To complete this, you need the following:
 
 Visual Studio 2015 or Visual Studio 2017.
-An active Azure account. (If you don't have an account, you can create a free account in just a couple of minutes.)
+An active Azure account. 
