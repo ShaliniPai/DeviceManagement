@@ -3,66 +3,44 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Azure.Devices.Client;
+using Microsoft.Azure.Devices;
 using Microsoft.Azure.Devices.Shared;
 
-namespace SimulatedManagedDevice
+namespace Trigger_Reboot
 {
     class Program
     {
-        static string DeviceConnectionString = "HostName=PlantMonitoringIoTHub.azure-devices.net;DeviceId=DeviceManagementDevID;SharedAccessKey=L8zI1C++4jeTzS0aQt3PxMKULKL7gep/hrf/dIQkQ+s=";
-        static DeviceClient Client = null;
+        static RegistryManager registryManager;
+        static string connString = "HostName=PlantMonitoringIoTHub.azure-devices.net;SharedAccessKeyName=iothubowner;SharedAccessKey=nMdz3etWKEZeJ9d9prpKrJneyP0x/aK6ytadZMUDc+k=";
+        static ServiceClient client;
+        static string targetDevice = "DeviceManagementDevID";
 
-        static Task<MethodResponse> onReboot(MethodRequest methodRequest, object userContext)
+        //Gets the device twin for rebooting the device and outputs the reported properties
+        public static async Task QueryTwinRebootReported()
         {
-            // In a production device, you would trigger a reboot scheduled to start after this method returns
-            // For this sample, we simulate the reboot by writing to the console and updating the reported properties 
-            try
-            {
-                Console.WriteLine("Rebooting!");
-
-                // Update device twin with reboot time. 
-                TwinCollection reportedProperties, reboot, lastReboot;
-                lastReboot = new TwinCollection();
-                reboot = new TwinCollection();
-                reportedProperties = new TwinCollection();
-                lastReboot["lastReboot"] = DateTime.Now;
-                reboot["reboot"] = lastReboot;
-                reportedProperties["iothubDM"] = reboot;
-                Client.UpdateReportedPropertiesAsync(reportedProperties).Wait();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine();
-                Console.WriteLine("Error in sample: {0}", ex.Message);
-            }
-
-            string result = "'Reboot started.'";
-            return Task.FromResult(new MethodResponse(Encoding.UTF8.GetBytes(result), 200));
+            Twin twin = await registryManager.GetTwinAsync(targetDevice);
+            Console.WriteLine(twin.Properties.Reported.ToJson());
         }
+
+        //Initiates the reboot on the device using a direct method
+        public static async Task StartReboot()
+        {
+            client = ServiceClient.CreateFromConnectionString(connString);
+            CloudToDeviceMethod method = new CloudToDeviceMethod("reboot");
+            method.ResponseTimeout = TimeSpan.FromSeconds(30);
+
+            CloudToDeviceMethodResult result = await client.InvokeDeviceMethodAsync(targetDevice, method);
+
+            Console.WriteLine("Invoked firmware update on device.");
+        }
+
         static void Main(string[] args)
         {
-            try
-            {
-                Console.WriteLine("Connecting to hub");
-                Client = DeviceClient.CreateFromConnectionString(DeviceConnectionString, TransportType.Mqtt);
-
-                // setup callback for "reboot" method
-                Client.SetMethodHandlerAsync("reboot", onReboot, null).Wait();
-                Console.WriteLine("Waiting for reboot method\n Press enter to exit.");
-                Console.ReadLine();
-
-                Console.WriteLine("Exiting...");
-
-                // as a good practice, remove the "reboot" handler
-                Client.SetMethodHandlerAsync("reboot", null, null).Wait();
-                Client.CloseAsync().Wait();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine();
-                Console.WriteLine("Error in sample: {0}", ex.Message);
-            }
+            registryManager = RegistryManager.CreateFromConnectionString(connString);
+            StartReboot().Wait();
+            QueryTwinRebootReported().Wait();
+            Console.WriteLine("Press ENTER to exit.");
+            Console.ReadLine();
         }
     }
 }
