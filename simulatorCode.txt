@@ -1,0 +1,104 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Runtime.Serialization;
+using Microsoft.Azure.Devices.Shared;
+using System.Threading;
+using System.Text;
+using PInvoke;
+using System.Security.Cryptography;
+
+namespace RMFramework
+{
+    public static class SampleDeviceFactory
+    {
+        public static string generateRandomDeviceID;
+        public static string generateRandomDeviceName;
+        public static string generateRandomVersion;
+        public static string generateRandomManufacturers;
+        public static string generateRandomLocation;
+        
+        public static string[] DeviceID = new string[10] { "020302b60301", "04030dc80001", "020b0a460502", "02021eee0201", "020604320001", "010209b00401", "02071f400601", "02071f400408", "02071f400503", "02071f400825" };
+        private static List<string> DeviceNames = new List<string>
+        {
+            "CoolingSampleDevice001",
+            "CoolingSampleDevice002",
+            "CoolingSampleDevice003",
+            "CoolingSampleDevice004",
+            "CoolingSampleDevice005",
+            "CoolingSampleDevice006",
+            "CoolingSampleDevice007",
+            "CoolingSampleDevice008",
+            "CoolingSampleDevice009",
+            "CoolingSampleDevice010"
+        }; 
+        public static string[] Version = new string[4] { "1.0", "1.1", "1.2", "1.3" };
+        private static List<string> DeviceManufacturers = new List<string>
+        {
+            "ARM",
+            "Contosso",
+            "Intel",
+            "Silicon Labs",
+            "Qualcom",
+            "Latronix"
+        };
+        public static List<string> DeviceLocations = new List<string>{
+            "Microsoft Red West Campus, Building A",
+            "800 Occidental Ave S, Seattle, WA 98134",
+            "11111 NE 8th St, Bellevue, WA 98004",
+            "3003 160th Ave SE Bellevue, WA 98008",
+            "15580 NE 31st St Redmond, WA 98008",
+            "15255 NE 40th St Redmond, WA 98008"
+        };
+        public static string generateRandomModelNumber()
+        {
+            Random rnd = new Random();
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, 8)
+              .Select(s => s[rnd.Next(s.Length)]).ToArray());
+        }
+
+        public static string generateRandomSerialNumber(string text, Encoding enc)
+        {
+            byte[] buffer = enc.GetBytes(text);
+            SHA1CryptoServiceProvider cryptoTransformSHA1 = new SHA1CryptoServiceProvider();
+            return BitConverter.ToString(cryptoTransformSHA1.ComputeHash(buffer)).Replace("-", "");
+        }
+        public static void RandomDeviceDetails()
+        {
+              Random rnd = new Random();
+              var RandomIndexDeviceID = rnd.Next(0, DeviceID.Length);
+              generateRandomDeviceID = DeviceID[RandomIndexDeviceID];
+              var RandomIndexDeviceName = rnd.Next(DeviceNames.Count);
+              generateRandomDeviceName = DeviceNames[RandomIndexDeviceName];
+              var RandomIndexVersion = rnd.Next(0, Version.Length);
+              generateRandomVersion = Version[RandomIndexVersion];
+              var RandomIndexManufacturer = rnd.Next(DeviceManufacturers.Count);
+              generateRandomManufacturers = DeviceManufacturers[RandomIndexManufacturer];
+              var RandomIndexLocation = rnd.Next(DeviceLocations.Count);
+              generateRandomLocation = DeviceLocations[RandomIndexLocation];
+
+            Console.WriteLine("Device Details");
+            Console.WriteLine("-------------------------------------------------------------------------------");
+            Console.WriteLine("Device ID:" + generateRandomDeviceID);
+            Console.WriteLine("Device Name:" + generateRandomDeviceName);
+            Console.WriteLine("Device Version:" + generateRandomVersion);
+            Console.WriteLine("Device Manufacturer:" + generateRandomManufacturers);
+            Console.WriteLine("Model Number:" + generateRandomModelNumber());
+            Console.WriteLine("Serial Number:" + generateRandomSerialNumber(DateTime.Now.ToString("F"), Encoding.ASCII));
+            Console.WriteLine("Device Location:" + generateRandomLocation);           
+            Console.WriteLine("-------------------------------------------------------------------------------");
+        }
+        private static void Main(string[] args)
+        {
+            for (int i = 0; i < 50; i++)
+            {
+                RandomDeviceDetails();
+                Thread.Sleep(2000);
+            }
+        }
+    }   
+}
+
+
